@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>vkontakte_api by 7even</title>
+    
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>vkontakte_api</h1>
+        <p>Ruby-way wrapper for VKontakte API</p>
+        <p class="view"><a href="https://github.com/7even/vkontakte_api">View the Project on GitHub <small>7even/vkontakte_api</small></a></p>
+        <ul>
+          <li><a href="https://github.com/7even/vkontakte_api/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/7even/vkontakte_api/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/7even/vkontakte_api">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>Overview</h2>
+
+<p><code>vkontakte_api</code> is a ruby wrapper for VKontakte API. It allows you to send method calls to the API and get the results back in <code>Hash</code>-es and <code>Array</code>-s.</p>
+
+<p>Namespaced methods are implemented as chained calls e.g. <code>app.friends.get(fields: ['last_name', 'first_name'])</code>.</p>
+
+<h2>Quickstart.</h2>
+
+<p>You can use <code>vkontakte_api</code> either for authorized requests (like <code>friends.get</code> or <code>groups.get</code> without <code>uid</code> parameter) or for unauthorized (like <code>users.get</code>).</p>
+
+<h3>Unauthorized requests</h3>
+
+<p>If all you need is some public info then you can go the easy way:</p>
+
+<div class="highlight">
+<pre><span class="nb">require</span> <span class="s1">'vkontakte_api'</span>
+<span class="vi">@app</span> <span class="o">=</span> <span class="no">VkontakteApi</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span>
+<span class="vi">@app</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uid</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1"># =&gt; [</span>
+<span class="c1">#     [0] {</span>
+<span class="c1">#                :uid =&gt; 1,</span>
+<span class="c1">#         :first_name =&gt; "Павел",</span>
+<span class="c1">#          :last_name =&gt; "Дуров"</span>
+<span class="c1">#     }</span>
+<span class="c1"># ]</span>
+</pre>
+</div>
+
+
+<h3>Authorized requests</h3>
+
+<p>But if you need some authorized methods then you have to get an access token. That involves asking a user's permission for some actions, returning him back to your app and getting the access token with a code. Then you can finally call the methods.</p>
+
+<p>First you need an app registered on vk.com. Go <a href="http://vk.com/editapp?act=create">here</a>, type the name of your app, it's domain and the app type. Then on the app edit page you will see the app id and a secret key.</p>
+
+<p>Then you need to get an access token which is needed for all personalized requests like <code>friends.get</code> etc. Issue a <code>GET</code> request to the following url:</p>
+
+<pre><code><a href="http://oauth.vk.com/authorize">http://oauth.vk.com/authorize</a>? 
+ client_id=APP_ID&amp; 
+ scope=SETTINGS&amp; 
+ redirect_uri=REDIRECT_URI&amp; 
+ response_type=code
+</code></pre>
+
+<p>where <code>APP_ID</code> is your app id, <code>SETTINGS</code> are access rights you want to get (full rights list can be read <a href="http://vk.com/developers.php?oid=-17680044&amp;p=Application_Access_Rights">here</a>) and <code>REDIRECT_URI</code> is the uri of your app where you want to receive the user back after giving the rights to your application.</p>
+
+<p>After you do the request, you are redirected to an url like the following:</p>
+
+<pre><code>http://REDIRECT_URI?code=7a6fa4dff77a228eeda56603b8f53806c883f011c40b72630bb50df056f6479e52a
+</code></pre>
+
+<p>Now you have the code and you are ready to get an access token. Issue the second request to the following URL:</p>
+
+<pre><code><a href="https://oauth.vk.com/access_token">https://oauth.vk.com/access_token</a>? 
+client_id=APP_ID&amp; 
+client_secret=APP_SECRET&amp; 
+code=7a6fa4dff77a228eeda56603b8f53806c883f011c40b72630bb50df056f6479e52a
+</code></pre>
+
+<p>Here you take APP_ID and APP_SECRET from your app settings page and the code from the previous step. The response will be in JSON:</p>
+
+<pre><code>{"access_token":"533bacf01e11f55b536a565b57531ac114461ae8736d6506a3", "expires_in":43200, "user_id":6492}
+</code></pre>
+
+<p>By that moment the authorization is done and you can use the API.</p>
+
+<div class="highlight">
+<pre><span class="c1"># create the API client associated with that token</span>
+<span class="vi">@app</span> <span class="o">=</span> <span class="no">VkontakteApi</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">'533bacf01e11f55b536a565b57531ac114461ae8736d6506a3'</span><span class="p">)</span>
+
+<span class="c1"># and do the requests</span>
+<span class="vi">@app</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">get</span> <span class="c1"># =&gt; [1, 31022447]</span>
+<span class="vi">@app</span><span class="o">.</span><span class="n">friends</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fields</span><span class="p">:</span> <span class="s1">'uid,first_name,last_name'</span><span class="p">)</span>
+<span class="c1"># =&gt;  [</span>
+<span class="c1">#       {</span>
+<span class="c1">#         :uid          =&gt; "1",</span>
+<span class="c1">#         :first_name   =&gt; "Павел",</span>
+<span class="c1">#         :last_name    =&gt; "Дуров"</span>
+<span class="c1">#       },</span>
+<span class="c1">#       {</span>
+<span class="c1">#         :uid          =&gt; "6492",</span>
+<span class="c1">#         :first_name   =&gt; "Andrew",</span>
+<span class="c1">#         :last_name    =&gt; "Rogozov"</span>
+<span class="c1">#       }</span>
+<span class="c1">#     ]</span>
+</pre>
+</div>
+
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/7even">7even</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>
