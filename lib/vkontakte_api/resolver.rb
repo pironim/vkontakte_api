@@ -116,7 +116,7 @@ module VkontakteApi
       # convert('get_profiles')
       # => 'getProfiles'
       def convert(name)
-        name.camelize(:lower)
+        name
       end
     end
   end
